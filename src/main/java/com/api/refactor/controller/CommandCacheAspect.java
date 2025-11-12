@@ -98,7 +98,6 @@ public class CommandCacheAspect {
      * @throws Throwable if the intercepted method throws an exception.
      */
     @Around("@annotation(cacheableCommand)")
-    @AfterReturning(pointcut = "@annotation(cacheableCommand)", returning = "result")
     public Object cacheCommand(ProceedingJoinPoint joinPoint, CacheableCommand cacheableCommand) throws Throwable {
 
         Object[] args = joinPoint.getArgs();
@@ -109,7 +108,7 @@ public class CommandCacheAspect {
         Object request = args[0];
         Object headers = args.length > 1 ? args[1] : null;
 
-        var keyExcluir = keyGenerator.generateKeyExcluir(cacheableCommand, request);
+        Optional<String> keyExcluir = keyGenerator.generateKeyExcluir(cacheableCommand, request);
 
         if (keyExcluir.isPresent() && !keyExcluir.get().isEmpty()) {
             return joinPoint.proceed();
@@ -139,8 +138,6 @@ public class CommandCacheAspect {
         Object result = joinPoint.proceed();
         if (result != null) {
             try {
-                extractDataFromResponse(result, cacheableCommand.responseType());
-
                 log.info("UNIVERSAL CACHE: Guardando en caché key: {}", cacheKey);
                 if (result instanceof Response) {
                     Response<?> response = (Response) result;
@@ -187,18 +184,15 @@ public class CommandCacheAspect {
         }
 
         if (value instanceof Collection<?> collection) {
-            boolean isEmpty = collection.isEmpty();
-            return !isEmpty;
+            return !collection.isEmpty();
         }
 
         if (value instanceof Map<?, ?> map) {
-            boolean isEmpty = map.isEmpty();
-            return !isEmpty;
+            return !map.isEmpty();
         }
 
         if (value instanceof String str) {
-            boolean isEmpty = str.trim().isEmpty();
-            return !isEmpty;
+            return !str.trim().isEmpty();
         }
 
         if (value.getClass().isArray()) {
@@ -207,8 +201,7 @@ public class CommandCacheAspect {
         }
 
         if (value instanceof Optional<?> optional) {
-            boolean isPresent = optional.isPresent();
-            return isPresent;
+            return optional.isPresent();
         }
 
         if (hasIsEmptyMethod(value)) {
