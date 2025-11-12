@@ -186,11 +186,11 @@ public class CommandCacheAspect {
 
         try {
             log.info("UNIVERSAL CACHE: Guardando en caché key: {}", cacheKey);
-            if (result instanceof Response<?> response) {
-                if (response.getValue() != null && shouldCacheValue(response.getValue())) {
-                    log.info("Guardando en caché key: {}", cacheKey);
-                    this.cacheService.put(cacheKey, response.getValue(), (long) cacheableCommand.ttlSeconds());
-                }
+            if (result instanceof Response<?> response &&
+                response.getValue() != null &&
+                shouldCacheValue(response.getValue())) {
+                log.info("Guardando en caché key: {}", cacheKey);
+                this.cacheService.put(cacheKey, response.getValue(), (long) cacheableCommand.ttlSeconds());
             }
             log.info("UNIVERSAL CACHE: Guardado exitoso en caché");
         } catch (Exception e) {
@@ -358,7 +358,11 @@ public class CommandCacheAspect {
      */
     private boolean isFieldNonEmpty(Field field, Object value) {
         try {
-            field.setAccessible(true);
+            if (!field.canAccess(value) && !field.trySetAccessible()) {
+                log.debug("UNIVERSAL CACHE: No se pudo acceder al campo '{}'", field.getName());
+                return false;
+            }
+
             Object fieldValue = field.get(value);
 
             if (fieldValue == null) {
