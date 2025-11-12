@@ -7,7 +7,6 @@ import ec.diners.com.ms.apiclient.utils.domain.response.Response;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
-import org.aspectj.lang.annotation.AfterReturning;
 import org.aspectj.lang.annotation.Around;
 import org.aspectj.lang.annotation.Aspect;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnBean;
@@ -108,51 +107,95 @@ public class CommandCacheAspect {
         Object request = args[0];
         Object headers = args.length > 1 ? args[1] : null;
 
-        Optional<String> keyExcluir = keyGenerator.generateKeyExcluir(cacheableCommand, request);
-
-        if (keyExcluir.isPresent() && !keyExcluir.get().isEmpty()) {
+        if (shouldExcludeFromCache(cacheableCommand, request)) {
             return joinPoint.proceed();
         }
 
         String cacheKey = keyGenerator.generateKey(cacheableCommand, request, headers);
         log.debug("UNIVERSAL CACHE: Clave generada: {}", cacheKey);
 
+        Optional<Response<?>> cachedResponse = getCachedResponse(cacheKey, cacheableCommand.responseType());
+        if (cachedResponse.isPresent()) {
+            return cachedResponse.get();
+        }
+
+        Object result = joinPoint.proceed();
+        storeCacheIfValid(cacheKey, result, cacheableCommand);
+
+        return result;
+    }
+
+    /**
+     * Determines if the cache should be excluded based on exclusion key.
+     *
+     * @param cacheableCommand the cache annotation.
+     * @param request the request object.
+     * @return true if cache should be excluded, false otherwise.
+     */
+    private boolean shouldExcludeFromCache(CacheableCommand cacheableCommand, Object request) {
+        Optional<String> keyExcluir = keyGenerator.generateKeyExcluir(cacheableCommand, request);
+        return keyExcluir.isPresent() && !keyExcluir.get().isEmpty();
+    }
+
+    /**
+     * Retrieves cached response if available.
+     *
+     * @param cacheKey the cache key.
+     * @param responseType the expected response type.
+     * @return Optional containing the cached Response, or empty if not found.
+     */
+    private Optional<Response<?>> getCachedResponse(String cacheKey, Class<?> responseType) {
         try {
-            Class<?> responseType = cacheableCommand.responseType();
             Optional<?> cachedData = cacheService.get(cacheKey, responseType);
 
             if (cachedData.isPresent()) {
                 log.info("UNIVERSAL CACHE: Cache HIT para key: {}", cacheKey);
-                return new Response<>(cachedData.get());
+                return Optional.of(new Response<>(cachedData.get()));
             }
         } catch (Exception e) {
             log.warn("UNIVERSAL CACHE: Error al obtener del caché: {}", e.getMessage());
-            try {
-                cacheService.evict(cacheKey);
-            } catch (Exception evictError) {
-                log.debug("No se pudo limpiar caché corrupta", evictError);
-            }
+            evictCorruptedCache(cacheKey);
+        }
+        return Optional.empty();
+    }
+
+    /**
+     * Evicts corrupted cache entry.
+     *
+     * @param cacheKey the cache key to evict.
+     */
+    private void evictCorruptedCache(String cacheKey) {
+        try {
+            cacheService.evict(cacheKey);
+        } catch (Exception evictError) {
+            log.debug("No se pudo limpiar caché corrupta", evictError);
+        }
+    }
+
+    /**
+     * Stores result in cache if it's valid for caching.
+     *
+     * @param cacheKey the cache key.
+     * @param result the result to cache.
+     * @param cacheableCommand the cache annotation containing TTL.
+     */
+    private void storeCacheIfValid(String cacheKey, Object result, CacheableCommand cacheableCommand) {
+        if (result == null) {
+            return;
         }
 
-
-        Object result = joinPoint.proceed();
-        if (result != null) {
-            try {
-                log.info("UNIVERSAL CACHE: Guardando en caché key: {}", cacheKey);
-                if (result instanceof Response) {
-                    Response<?> response = (Response) result;
-                    if (response.getValue() != null && shouldCacheValue(response.getValue())) {
-                        log.info("Guardando en caché key: {}", cacheKey);
-                        this.cacheService.put(cacheKey, response.getValue(), (long) cacheableCommand.ttlSeconds());
-                    }
+        try {
+            log.info("UNIVERSAL CACHE: Guardando en caché key: {}", cacheKey);
+            if (result instanceof Response<?> response) {
+                if (response.getValue() != null && shouldCacheValue(response.getValue())) {
+                    log.info("Guardando en caché key: {}", cacheKey);
+                    this.cacheService.put(cacheKey, response.getValue(), (long) cacheableCommand.ttlSeconds());
                 }
-                log.info("UNIVERSAL CACHE: Guardado exitoso en caché");
-            } catch (Exception e) {
-                log.warn("UNIVERSAL CACHE: Error al guardar en caché: {}", e.getMessage());
             }
+            log.info("UNIVERSAL CACHE: Guardado exitoso en caché");
+        } catch (Exception e) {
+            log.warn("UNIVERSAL CACHE: Error al guardar en caché: {}", e.getMessage());
         }
-
-        return result;
     }
 
     /**
@@ -218,11 +261,7 @@ public class CommandCacheAspect {
             }
         }
 
-        if (hasEmptyCollectionFields(value)) {
-            return false;
-        }
-
-        return true;
+        return !hasEmptyCollectionFields(value);
     }
 
     /**
@@ -281,82 +320,64 @@ public class CommandCacheAspect {
      */
     private boolean hasEmptyCollectionFields(Object value) {
         try {
-            Class<?> clazz = value.getClass();
-
-            Field[] fields = clazz.getDeclaredFields();
+            Field[] fields = value.getClass().getDeclaredFields();
             boolean hasCollectionFields = false;
-            boolean allCollectionsEmpty = true;
 
             for (Field field : fields) {
-                if (Collection.class.isAssignableFrom(field.getType()) ||
-                        Map.class.isAssignableFrom(field.getType())) {
-
+                if (isCollectionOrMapField(field)) {
                     hasCollectionFields = true;
-                    field.setAccessible(true);
-
-                    try {
-                        Object fieldValue = field.get(value);
-
-                        if (fieldValue == null) {
-                            continue;
-                        }
-
-                        boolean isEmpty = false;
-                        if (fieldValue instanceof Collection) {
-                            isEmpty = ((Collection<?>) fieldValue).isEmpty();
-                        } else if (fieldValue instanceof Map) {
-                            isEmpty = ((Map<?, ?>) fieldValue).isEmpty();
-                        }
-
-                        if (!isEmpty) {
-                            allCollectionsEmpty = false;
-                            break;
-                        } else {
-                            log.debug("UNIVERSAL CACHE: Campo '{}' está vacío", field.getName());
-                        }
-                    } catch (IllegalAccessException e) {
-                        log.debug("UNIVERSAL CACHE: No se pudo acceder al campo '{}': {}",
-                                field.getName(), e.getMessage());
+                    if (isFieldNonEmpty(field, value)) {
+                        return false;
                     }
                 }
             }
-            return hasCollectionFields && allCollectionsEmpty;
+            return hasCollectionFields;
 
         } catch (Exception e) {
             return false;
         }
     }
 
+    /**
+     * Checks if a field is a Collection or Map type.
+     *
+     * @param field the field to check.
+     * @return true if the field is a Collection or Map, false otherwise.
+     */
+    private boolean isCollectionOrMapField(Field field) {
+        return Collection.class.isAssignableFrom(field.getType()) ||
+                Map.class.isAssignableFrom(field.getType());
+    }
 
     /**
-     * Extracts data from the given response object if it matches the expected type.
-     * <p>
-     * This method attempts to extract the data from a wrapper object (e.g., a Response object)
-     * by invoking its `getData` method. If the extracted data matches the expected type,
-     * it is returned. Otherwise, the original result is returned.
-     * </p>
+     * Checks if a field contains non-empty data.
      *
-     * @param result       the response object to extract data from.
-     * @param expectedType the expected type of the data to be extracted.
-     * @return the extracted data if it matches the expected type, or the original result.
+     * @param field the field to check.
+     * @param value the object containing the field.
+     * @return true if the field contains non-empty data, false otherwise.
      */
-    private Object extractDataFromResponse(Object result, Class<?> expectedType) {
-        if (expectedType.isAssignableFrom(result.getClass())) {
-            return result;
-        }
-
+    private boolean isFieldNonEmpty(Field field, Object value) {
         try {
-            Method getDataMethod = result.getClass().getMethod("getData");
-            Object data = getDataMethod.invoke(result);
+            field.setAccessible(true);
+            Object fieldValue = field.get(value);
 
-            if (data != null && expectedType.isAssignableFrom(data.getClass())) {
-                log.debug("Extrayendo data del Response wrapper");
-                return data;
+            if (fieldValue == null) {
+                return false;
             }
-        } catch (Exception e) {
-            log.debug("No se pudo extraer data del Response: {}", e.getMessage());
-        }
 
-        return result;
+            if (fieldValue instanceof Collection<?> collection) {
+                return !collection.isEmpty();
+            }
+
+            if (fieldValue instanceof Map<?, ?> map) {
+                return !map.isEmpty();
+            }
+
+            return false;
+        } catch (IllegalAccessException e) {
+            log.debug("UNIVERSAL CACHE: No se pudo acceder al campo '{}': {}",
+                    field.getName(), e.getMessage());
+            return false;
+        }
     }
 }
