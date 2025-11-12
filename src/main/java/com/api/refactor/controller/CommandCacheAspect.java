@@ -190,7 +190,7 @@ public class CommandCacheAspect {
                 response.getValue() != null &&
                 shouldCacheValue(response.getValue())) {
                 log.info("Guardando en caché key: {}", cacheKey);
-                this.cacheService.put(cacheKey, response.getValue(), (long) cacheableCommand.ttlSeconds());
+                this.cacheService.put(cacheKey, response.getValue(), cacheableCommand.ttlSeconds());
             }
             log.info("UNIVERSAL CACHE: Guardado exitoso en caché");
         } catch (Exception e) {
