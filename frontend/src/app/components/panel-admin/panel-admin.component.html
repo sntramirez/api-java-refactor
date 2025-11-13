@@ -1,0 +1,141 @@
+<div class="admin-container">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>Panel Administrador</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a (click)="cambiarSeccion('dashboard')" [class.active]="seccionActiva === 'dashboard'" class="nav-item">Dashboard</a>
+      <a (click)="cambiarSeccion('donantes')" [class.active]="seccionActiva === 'donantes'" class="nav-item">Donantes</a>
+      <a (click)="cambiarSeccion('beneficiarios')" [class.active]="seccionActiva === 'beneficiarios'" class="nav-item">Beneficiarios</a>
+      <a (click)="cambiarSeccion('donaciones')" [class.active]="seccionActiva === 'donaciones'" class="nav-item">Donaciones</a>
+      <a (click)="cambiarSeccion('asignaciones')" [class.active]="seccionActiva === 'asignaciones'" class="nav-item">Asignaciones</a>
+      <a (click)="cerrarSesion()" class="nav-item cerrar-sesion">Cerrar Sesión</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <!-- Dashboard -->
+    <div *ngIf="seccionActiva === 'dashboard'" class="section">
+      <h1>Dashboard</h1>
+
+      <div class="metricas-grid">
+        <div class="metrica-card">
+          <h3>{{ metricas.totalDonaciones }}</h3>
+          <p>Total Donaciones</p>
+        </div>
+        <div class="metrica-card">
+          <h3>{{ metricas.totalBeneficiarios }}</h3>
+          <p>Total Beneficiarios</p>
+        </div>
+        <div class="metrica-card pendientes">
+          <h3>{{ metricas.ayudasPendientes }}</h3>
+          <p>Ayudas Pendientes</p>
+        </div>
+        <div class="metrica-card transito">
+          <h3>{{ metricas.ayudasEnTransito }}</h3>
+          <p>Ayudas en Tránsito</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Donaciones -->
+    <div *ngIf="seccionActiva === 'donaciones'" class="section">
+      <h1>Gestión de Donaciones</h1>
+      <div class="tabla-container">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Tipo</th>
+              <th>Cantidad</th>
+              <th>Donante</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let donacion of donaciones">
+              <td>{{ donacion.id }}</td>
+              <td>{{ donacion.tipo }}</td>
+              <td>{{ donacion.cantidad }}</td>
+              <td>{{ donacion.nombreDonante }}</td>
+              <td><span class="badge">{{ donacion.estado }}</span></td>
+              <td>{{ donacion.fechaDonacion | date:'short' }}</td>
+              <td>
+                <button class="btn-accion">Ver</button>
+                <button class="btn-accion">Asignar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Beneficiarios -->
+    <div *ngIf="seccionActiva === 'beneficiarios'" class="section">
+      <h1>Gestión de Beneficiarios</h1>
+      <div class="tabla-container">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Nombre</th>
+              <th>Cédula</th>
+              <th>Ciudad</th>
+              <th>Teléfono</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let beneficiario of beneficiarios">
+              <td>{{ beneficiario.id }}</td>
+              <td>{{ beneficiario.nombre }}</td>
+              <td>{{ beneficiario.cedula }}</td>
+              <td>{{ beneficiario.ciudad }}</td>
+              <td>{{ beneficiario.telefono }}</td>
+              <td><span class="badge">{{ beneficiario.activo ? 'Activo' : 'Inactivo' }}</span></td>
+              <td>
+                <button class="btn-accion">Ver</button>
+                <button class="btn-accion">Editar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Asignaciones -->
+    <div *ngIf="seccionActiva === 'asignaciones'" class="section">
+      <h1>Gestión de Asignaciones</h1>
+      <div class="tabla-container">
+        <table class="tabla">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Tipo Ayuda</th>
+              <th>Beneficiario</th>
+              <th>Estado</th>
+              <th>Fecha</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let asignacion of asignaciones">
+              <td>{{ asignacion.id }}</td>
+              <td>{{ asignacion.donacion.tipo }}</td>
+              <td>{{ asignacion.beneficiario.nombre }}</td>
+              <td><span class="badge">{{ asignacion.estado }}</span></td>
+              <td>{{ asignacion.fechaAsignacion | date:'short' }}</td>
+              <td>
+                <button class="btn-accion">Ver</button>
+                <button class="btn-accion">Cambiar Estado</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </main>
+</div>

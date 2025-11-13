@@ -1,0 +1,73 @@
+<div class="solicitudes-container">
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>Portal Beneficiario</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a routerLink="/busqueda-ayudas" class="nav-item">Ayudas Disponibles</a>
+      <a routerLink="/mis-solicitudes" routerLinkActive="active" class="nav-item">Mis Solicitudes</a>
+      <a (click)="cerrarSesion()" class="nav-item cerrar-sesion">Cerrar Sesión</a>
+    </nav>
+  </aside>
+
+  <main class="main-content">
+    <header class="page-header">
+      <h1>Mis Solicitudes</h1>
+    </header>
+
+    <div class="filtros-tabs">
+      <button
+        [class.active]="filtroEstado === 'TODAS'"
+        (click)="filtroEstado = 'TODAS'; aplicarFiltro()">
+        Todas
+      </button>
+      <button
+        [class.active]="filtroEstado === 'ASIGNADA'"
+        (click)="filtroEstado = 'ASIGNADA'; aplicarFiltro()">
+        Pendientes
+      </button>
+      <button
+        [class.active]="filtroEstado === 'EN_CAMINO'"
+        (click)="filtroEstado = 'EN_CAMINO'; aplicarFiltro()">
+        En Camino
+      </button>
+      <button
+        [class.active]="filtroEstado === 'ENTREGADA'"
+        (click)="filtroEstado = 'ENTREGADA'; aplicarFiltro()">
+        Entregadas
+      </button>
+    </div>
+
+    <div class="solicitudes-lista">
+      <div *ngIf="loading" class="loading">Cargando solicitudes...</div>
+
+      <div *ngIf="!loading && solicitudesFiltradas.length === 0" class="empty-state">
+        <p>No tienes solicitudes {{ filtroEstado !== 'TODAS' ? 'en este estado' : '' }}</p>
+      </div>
+
+      <div *ngFor="let solicitud of solicitudesFiltradas" class="solicitud-card">
+        <div class="solicitud-header">
+          <h3>{{ solicitud.donacion.tipo }}</h3>
+          <span class="estado-badge" [class]="'estado-' + solicitud.estado.toLowerCase()">
+            {{ solicitud.estado }}
+          </span>
+        </div>
+
+        <div class="solicitud-body">
+          <p><strong>Cantidad:</strong> {{ solicitud.donacion.cantidad }}</p>
+          <p><strong>Fecha Solicitud:</strong> {{ solicitud.fechaAsignacion | date:'short' }}</p>
+          <p *ngIf="solicitud.comentarios"><strong>Comentarios:</strong> {{ solicitud.comentarios }}</p>
+        </div>
+
+        <div class="solicitud-footer">
+          <button
+            *ngIf="solicitud.estado === 'ASIGNADA' || solicitud.estado === 'EN_CAMINO'"
+            class="btn-confirmar"
+            (click)="marcarComoRecibida(solicitud)">
+            Marcar como Recibida
+          </button>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>

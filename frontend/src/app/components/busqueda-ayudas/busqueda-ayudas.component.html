@@ -1,0 +1,95 @@
+<div class="busqueda-container">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>Portal Beneficiario</h2>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a routerLink="/busqueda-ayudas" routerLinkActive="active" class="nav-item">
+        Ayudas Disponibles
+      </a>
+      <a routerLink="/mis-solicitudes" class="nav-item">
+        Mis Solicitudes
+      </a>
+      <a (click)="cerrarSesion()" class="nav-item cerrar-sesion">
+        Cerrar Sesión
+      </a>
+    </nav>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <header class="page-header">
+      <h1>Ayudas Disponibles</h1>
+    </header>
+
+    <!-- Filtros -->
+    <section class="filtros-section">
+      <div class="filtros-grupo">
+        <label>Tipo de Ayuda:</label>
+        <div class="filtros-checkboxes">
+          <label *ngFor="let tipo of tiposDonacion" class="checkbox-label">
+            <input
+              type="checkbox"
+              [checked]="filtros.tipo.includes(tipo)"
+              (change)="toggleFiltroTipo(tipo)">
+            <span>{{ tipo }}</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="filtros-grupo">
+        <label for="ubicacion">Ubicación:</label>
+        <input
+          id="ubicacion"
+          type="text"
+          [(ngModel)]="filtros.ubicacion"
+          class="form-control"
+          placeholder="Buscar por ubicación">
+      </div>
+
+      <div class="filtros-grupo">
+        <label for="ordenar">Ordenar por:</label>
+        <select id="ordenar" [(ngModel)]="filtros.ordenar" (change)="aplicarFiltros()" class="form-control">
+          <option value="recientes">Más Recientes</option>
+          <option value="cantidad">Cantidad</option>
+        </select>
+      </div>
+    </section>
+
+    <!-- Lista de Ayudas -->
+    <section class="ayudas-grid">
+      <div *ngIf="loading" class="loading">
+        Cargando ayudas disponibles...
+      </div>
+
+      <div *ngIf="!loading && ayudasFiltradas.length === 0" class="empty-state">
+        <p>No hay ayudas disponibles en este momento</p>
+      </div>
+
+      <div *ngFor="let ayuda of ayudasFiltradas" class="ayuda-card">
+        <div class="ayuda-tipo" [class]="'tipo-' + ayuda.tipo.toLowerCase()">
+          {{ ayuda.tipo }}
+        </div>
+
+        <h3>Donación de {{ ayuda.tipo }}</h3>
+
+        <div class="ayuda-details">
+          <p><strong>Cantidad:</strong> {{ ayuda.cantidad }}</p>
+          <p *ngIf="ayuda.descripcion"><strong>Descripción:</strong> {{ ayuda.descripcion }}</p>
+          <p><strong>Donante:</strong> {{ ayuda.nombreDonante }}</p>
+          <p><strong>Fecha:</strong> {{ ayuda.fechaDonacion | date:'short' }}</p>
+        </div>
+
+        <div class="ayuda-estado">
+          <span class="badge badge-disponible">Disponible</span>
+        </div>
+
+        <button class="btn-solicitar" (click)="solicitarAyuda(ayuda)">
+          Solicitar Esta Ayuda
+        </button>
+      </div>
+    </section>
+  </main>
+</div>

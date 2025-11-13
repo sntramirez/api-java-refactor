@@ -1,0 +1,64 @@
+<div class="confirmacion-container" *ngIf="donacion">
+  <div class="confirmacion-card">
+    <div class="icon-success">
+      <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+        <circle cx="12" cy="12" r="10" stroke-width="2"/>
+        <path d="M9 12l2 2 4-4" stroke-width="2"/>
+      </svg>
+    </div>
+
+    <h1>¡Donación Registrada!</h1>
+    <p class="mensaje-agradecimiento">
+      Gracias por tu generosidad. Tu donación ha sido registrada exitosamente
+      y será revisada por nuestro equipo.
+    </p>
+
+    <div class="resumen-donacion">
+      <h2>Resumen de tu Donación</h2>
+
+      <div class="detalle-item">
+        <span class="label">Número de Referencia:</span>
+        <span class="valor referencia">{{ donacion.numeroReferencia }}</span>
+      </div>
+
+      <div class="detalle-item">
+        <span class="label">Tipo de Donación:</span>
+        <span class="valor">{{ donacion.tipo }}</span>
+      </div>
+
+      <div class="detalle-item">
+        <span class="label">Cantidad/Descripción:</span>
+        <span class="valor">{{ donacion.cantidad }}</span>
+      </div>
+
+      <div class="detalle-item" *ngIf="donacion.descripcion">
+        <span class="label">Descripción:</span>
+        <span class="valor">{{ donacion.descripcion }}</span>
+      </div>
+
+      <div class="detalle-item">
+        <span class="label">Fecha:</span>
+        <span class="valor">{{ donacion.fechaDonacion | date:'short' }}</span>
+      </div>
+    </div>
+
+    <div class="proximos-pasos">
+      <h3>Próximos Pasos</h3>
+      <ol>
+        <li>Nuestro equipo revisará tu donación en las próximas 24-48 horas</li>
+        <li>Te contactaremos al email o teléfono proporcionado para coordinar la entrega</li>
+        <li>Una vez asignada, recibirás notificación sobre el beneficiario</li>
+        <li>Podrás hacer seguimiento del estado de tu donación</li>
+      </ol>
+    </div>
+
+    <div class="acciones">
+      <button class="btn-secondary" (click)="volverAlInicio()">
+        Volver al Inicio
+      </button>
+      <button class="btn-primary" (click)="hacerOtraDonacion()">
+        Hacer Otra Donación
+      </button>
+    </div>
+  </div>
+</div>

@@ -1,0 +1,135 @@
+<div class="home-container">
+  <!-- Header -->
+  <header class="header">
+    <nav class="navbar">
+      <h1 class="logo">Portal de Donaciones</h1>
+      <ul class="nav-links">
+        <li><a routerLink="/home">Inicio</a></li>
+        <li><a href="#como-ayudar">Cómo Ayudar</a></li>
+        <li><a href="#sobre-nosotros">Sobre Nosotros</a></li>
+        <li><a routerLink="/login" class="btn-login">Ingresar</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="hero-content">
+      <h2 class="hero-title">Juntos Podemos Hacer la Diferencia</h2>
+      <p class="hero-subtitle">Tu ayuda transforma vidas</p>
+
+      <div class="estadisticas">
+        <div class="stat-card">
+          <h3>{{ estadisticas.totalDonaciones }}</h3>
+          <p>Donaciones Realizadas</p>
+        </div>
+        <div class="stat-card">
+          <h3>{{ estadisticas.beneficiariosAyudados }}</h3>
+          <p>Beneficiarios Ayudados</p>
+        </div>
+      </div>
+
+      <button class="btn-donar-principal" (click)="scrollToDonationForm()">
+        Donar Ahora
+      </button>
+    </div>
+  </section>
+
+  <!-- Campañas Activas -->
+  <section class="campanas-section">
+    <h2>Campañas Activas</h2>
+    <div class="campanas-grid">
+      <div class="campana-card" *ngFor="let campana of campanasActivas">
+        <h3>{{ campana.nombre }}</h3>
+        <p>{{ campana.descripcion }}</p>
+        <span class="tipo-ayuda">{{ campana.tipoAyuda }}</span>
+        <div class="progreso-container">
+          <div class="progreso-bar" [style.width.%]="campana.progreso"></div>
+        </div>
+        <p class="progreso-text">{{ campana.progreso }}% completado</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Formulario de Donación -->
+  <section id="formulario-donacion" class="formulario-section">
+    <h2>Realizar Donación</h2>
+    <form [formGroup]="donacionForm" (ngSubmit)="onSubmit()" class="donacion-form">
+
+      <div class="form-group">
+        <label for="tipo">Tipo de Donación *</label>
+        <select id="tipo" formControlName="tipo" class="form-control">
+          <option value="">Seleccione un tipo</option>
+          <option *ngFor="let tipo of tiposDonacion" [value]="tipo">
+            {{ tipo }}
+          </option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="cantidad">Cantidad/Descripción *</label>
+        <input
+          id="cantidad"
+          type="text"
+          formControlName="cantidad"
+          class="form-control"
+          placeholder="Ej: 5 kg, $100, 10 unidades">
+      </div>
+
+      <div class="form-group">
+        <label for="descripcion">Descripción Adicional</label>
+        <textarea
+          id="descripcion"
+          formControlName="descripcion"
+          class="form-control"
+          rows="3"
+          placeholder="Detalles adicionales sobre la donación"></textarea>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="nombreDonante">Nombre Completo *</label>
+          <input
+            id="nombreDonante"
+            type="text"
+            formControlName="nombreDonante"
+            class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label for="telefonoDonante">Teléfono *</label>
+          <input
+            id="telefonoDonante"
+            type="tel"
+            formControlName="telefonoDonante"
+            class="form-control">
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="emailDonante">Email *</label>
+        <input
+          id="emailDonante"
+          type="email"
+          formControlName="emailDonante"
+          class="form-control">
+      </div>
+
+      <div class="form-group">
+        <label for="comentarios">Comentarios Adicionales</label>
+        <textarea
+          id="comentarios"
+          formControlName="comentarios"
+          class="form-control"
+          rows="2"></textarea>
+      </div>
+
+      <button
+        type="submit"
+        class="btn-submit"
+        [disabled]="!donacionForm.valid || loading">
+        {{ loading ? 'Procesando...' : 'Enviar Donación' }}
+      </button>
+    </form>
+  </section>
+</div>

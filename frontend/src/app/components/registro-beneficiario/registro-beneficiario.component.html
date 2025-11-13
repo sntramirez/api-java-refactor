@@ -1,0 +1,151 @@
+<div class="registro-container">
+  <div class="registro-card">
+    <h1>Registro de Beneficiario</h1>
+    <p class="subtitulo">Completa el formulario para registrarte y recibir ayuda</p>
+
+    <form [formGroup]="registroForm" (ngSubmit)="onSubmit()" class="registro-form">
+
+      <!-- Información Personal -->
+      <div class="form-section">
+        <h3>Información Personal</h3>
+
+        <div class="form-group">
+          <label for="nombre">Nombre Completo *</label>
+          <input id="nombre" type="text" formControlName="nombre" class="form-control">
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="cedula">Cédula/Documento *</label>
+            <input id="cedula" type="text" formControlName="cedula" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="fechaNacimiento">Fecha de Nacimiento *</label>
+            <input id="fechaNacimiento" type="date" formControlName="fechaNacimiento" class="form-control">
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="telefono">Teléfono *</label>
+            <input id="telefono" type="tel" formControlName="telefono" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="email">Email</label>
+            <input id="email" type="email" formControlName="email" class="form-control">
+          </div>
+        </div>
+      </div>
+
+      <!-- Ubicación -->
+      <div class="form-section">
+        <h3>Ubicación</h3>
+
+        <div class="form-group">
+          <label for="direccion">Dirección Completa *</label>
+          <input id="direccion" type="text" formControlName="direccion" class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label for="ciudad">Ciudad/Sector *</label>
+          <input id="ciudad" type="text" formControlName="ciudad" class="form-control">
+        </div>
+      </div>
+
+      <!-- Situación Actual -->
+      <div class="form-section">
+        <h3>Situación Actual</h3>
+
+        <div class="form-group">
+          <label for="descripcionSituacion">
+            Descripción de tu situación actual (máximo 500 caracteres)
+          </label>
+          <textarea
+            id="descripcionSituacion"
+            formControlName="descripcionSituacion"
+            class="form-control"
+            rows="4"
+            maxlength="500"
+            placeholder="Describe brevemente tu situación actual y por qué necesitas ayuda"></textarea>
+          <span class="char-count">
+            {{ registroForm.get('descripcionSituacion')?.value?.length || 0 }}/500
+          </span>
+        </div>
+
+        <div class="form-group">
+          <label for="personasEnHogar">Número de Personas en el Hogar *</label>
+          <input
+            id="personasEnHogar"
+            type="number"
+            formControlName="personasEnHogar"
+            class="form-control"
+            min="1">
+        </div>
+      </div>
+
+      <!-- Tipo de Ayuda -->
+      <div class="form-section">
+        <h3>Tipo de Ayuda que Necesitas * (selecciona al menos uno)</h3>
+
+        <div class="ayudas-grid">
+          <div
+            *ngFor="let tipo of tiposDonacion"
+            class="ayuda-checkbox"
+            [class.selected]="isAyudaSeleccionada(tipo)"
+            (click)="toggleAyuda(tipo)">
+            <input
+              type="checkbox"
+              [checked]="isAyudaSeleccionada(tipo)"
+              (click)="$event.stopPropagation()">
+            <span>{{ tipo }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contraseña -->
+      <div class="form-section">
+        <h3>Credenciales de Acceso</h3>
+
+        <div class="form-group">
+          <label for="password">Contraseña * (mínimo 6 caracteres)</label>
+          <input
+            id="password"
+            type="password"
+            formControlName="password"
+            class="form-control">
+        </div>
+
+        <div class="form-group">
+          <label for="confirmarPassword">Confirmar Contraseña *</label>
+          <input
+            id="confirmarPassword"
+            type="password"
+            formControlName="confirmarPassword"
+            class="form-control">
+        </div>
+      </div>
+
+      <!-- Términos -->
+      <div class="form-group">
+        <label class="checkbox-container">
+          <input type="checkbox" formControlName="aceptaTerminos">
+          <span>Acepto los términos y condiciones *</span>
+        </label>
+      </div>
+
+      <!-- Botones -->
+      <div class="form-actions">
+        <button type="submit" class="btn-submit" [disabled]="!registroForm.valid || loading">
+          {{ loading ? 'Registrando...' : 'Registrarse' }}
+        </button>
+
+        <p class="login-link">
+          ¿Ya tienes cuenta?
+          <a (click)="irALogin()" class="link">Inicia sesión</a>
+        </p>
+      </div>
+    </form>
+  </div>
+</div>
